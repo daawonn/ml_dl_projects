@@ -1,0 +1,86 @@
+<html>
+    <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <div>
+            <fieldset>
+                <button onclick="onLangDetect();">언어감지</button><span></span>
+                <textarea rows="10", cols="50", id='oriText'></textarea>
+                &nbsp;
+                <button id="transBtn">번역하기</button>
+                <textarea rows="10", cols="50", class="outText"></textarea>            
+            </fieldset>
+        </div>
+        <script>
+            let code = ''
+            // 언어 감지 클릭 이벤트 처리
+            function onLangDetect(){
+                console.log('언어감지호출')
+                // 번역을 요청하는 원문은 주제상 내용이 크기 때문에 get 방식이 아닌 post 방식으로 
+                // 서버쪽에 전송해야 한다. (post 방식은 http 프로토콜의 body 를 타고 전송되므로 대용량에 적합하다.)
+                // 화면은 그대로이면서 백그라운드에서 통신이 진행되어야 한다 => ajax
+                let oriText =$('#oriText').val()
+                if(oriText === '' || oriText.length <100 ){
+                    alert('정확하게 입력하세요 !!')
+                    return
+
+                }
+                $.post({
+                    url:'/bsgo',   //서버주소
+                    data:'o='+oriText,   //전달 할 데이터
+                    dataType:'json',     //응답 데이터의 형태
+                    success:( resData )=>{   //통신이 성공하면 나오는 결과를 처리하는 (콜백)함수
+                        console.log('성공',resData)
+                        // 언어를 감지한 내용을 화면에 표시
+                        $('span').html(resData.code_str)
+                        code = resData.code
+                    },
+                    error:(err)=>{       //통신이 실패하면 호출되는 함수
+                        console.log('실패',err)
+                    }
+
+                })
+            }
+            
+            // 번역 하기 클릭 이벤트 처리
+            $('#transBtn').on('click', ()=>{
+                console.log('언어번역호출', code)
+                // 서버로 원문, 언어감지코드 전송
+                if (code === ''){
+                    alert('언어감지체크부터 진행하세요')
+                    return
+                }
+                // 서버로 전송 => 응답하면 번역 결과를 화면에 출력
+                let oriText =$('#oriText').val()
+                $.post({
+                    url:'/transfer',   //서버주소
+                    data:`o=${oriText}&na=${code}`,   //전달 할 데이터 => o=원문
+                    dataType:'json',     //응답 데이터의 형태
+                    success:( resData )=>{   //통신이 성공하면 나오는 결과를 처리하는 (콜백)함수
+                        console.log('성공',resData)
+                        // 번역한 내용을 화면에 표시
+                        /*
+                        {
+                            "message": {
+                                "@type": "response",
+                                "@service": "naverservice.nmt.proxy",
+                                "@version": "1.0.0",
+                                "result": {
+                                    "srcLangType":"ko",
+                                    "tarLangType":"en",
+                                    "translatedText": "tea"
+                                }
+                            }
+                        }
+                        */
+                        $('.outText').val(resData.message.result.translatedText)
+                    },
+                    error:(err)=>{       //통신이 실패하면 호출되는 함수
+                        alert('번역실패'+ err)
+                    },
+                })
+            } )            
+        </script>
+    </body>
+<html>
