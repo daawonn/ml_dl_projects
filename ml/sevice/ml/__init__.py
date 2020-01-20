@@ -77,7 +77,7 @@ def transfer_lang( text, na_input_code = 'en', na_output_code = 'ko'):
     if(rescode==200):  #응답성공
         return json.load( response )
     else:
-        return {}
+        return {}        
 
 
 # 이 코드는 개발시 테스트 했던 코드이다.
